@@ -1,34 +1,72 @@
-package xyz.ConstruTec.app.controller;
+package xyz.ConstruTec.app.web.controller;
+
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import xyz.ConstruTec.app.dao.ObraDao;
-import xyz.ConstruTec.app.dao.ClienteDao; // certifique-se que esse DAO existe
+import xyz.ConstruTec.app.dto.ObraDetalhesDTO;
 import xyz.ConstruTec.app.model.Obra;
+import xyz.ConstruTec.app.model.RetiradaProduto;
+import xyz.ConstruTec.app.service.ClienteService;
+import xyz.ConstruTec.app.service.ObraService;
 
 @Controller
 @RequestMapping("/obras")
 public class ObraController {
 
     @Autowired
-    private ObraDao obraDao;
+    private ObraService obraService;
 
     @Autowired
-    private ClienteDao clienteDao;
+    private ClienteService clienteService;
 
-    @GetMapping("/cadastrar")
-    public String exibirFormularioCadastro(Model model) {
+    @GetMapping
+    public String listarObras(Model model) {
+        List<Obra> obras = obraService.buscarTodasObras();
+        model.addAttribute("clientes", clienteService.buscarTodos());
         model.addAttribute("obra", new Obra());
-        model.addAttribute("clientes", clienteDao.findAll());
-        return "obra/cadastro";
+        model.addAttribute("obras", obras);
+        return "obra/obras";
     }
 
-    @PostMapping("/salvar")
-    public String salvar(@ModelAttribute Obra obra) {
-        obraDao.save(obra);
+    @GetMapping("/{id}/detalhes")
+    @ResponseBody
+    public ResponseEntity<ObraDetalhesDTO> detalhesObra(@PathVariable Long id) {
+        ObraDetalhesDTO dto = obraService.buscarDetalhesObra(id);
+        if (dto == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/nova")
+    public String novaObraForm(Model model) {
+        model.addAttribute("obra", new Obra());
+        model.addAttribute("clientes", clienteService.buscarTodos());
+        return "obra/obras";
+    }
+
+    @PostMapping
+    public String salvarObra(@ModelAttribute Obra obra) {
+        obraService.salvar(obra);
         return "redirect:/obras";
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseBody
+    public ResponseEntity<Void> excluirObra(@PathVariable Long id) {
+        boolean excluido = obraService.excluirObra(id);
+        return excluido ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/retiradas")
+    @ResponseBody
+    public ResponseEntity<Void> adicionarRetirada(@PathVariable Long id, @RequestBody RetiradaProduto retirada) {
+        boolean adicionou = obraService.adicionarRetirada(id, retirada);
+        return adicionou ? ResponseEntity.ok().build() : ResponseEntity.badRequest().build();
     }
 }

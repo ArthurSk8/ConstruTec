@@ -4,28 +4,17 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "retirada_produto")
-public class RetiradaProduto {
+public class RetiradaProduto extends AbstractEntity<Long> {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    @Column(nullable = false)
     private String descricao;
 
+    @Column(nullable = false)
     private int quantidade;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "obra_id")
     private Obra obra;
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getDescricao() {
         return descricao;
